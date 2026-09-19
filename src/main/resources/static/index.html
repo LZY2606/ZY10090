@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fwplan · 固件依赖与发布规划</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header>
+  <h1>固件依赖与发布规划</h1>
+  <div class="sub">bootloader 下限 · 硬件修订 · 配套区间 · 不可跨越版本 · 断电恢复模拟</div>
+</header>
+
+<nav class="tabs">
+  <button data-tab="overview" class="active">总览 / 导入</button>
+  <button data-tab="matrix">兼容矩阵</button>
+  <button data-tab="cohorts">批次与步骤图</button>
+  <button data-tab="releases">发布与回执</button>
+  <button data-tab="analyze">临时分析</button>
+</nav>
+
+<main>
+  <!-- 总览 -->
+  <section id="tab-overview" class="tab active">
+    <div class="grid2">
+      <div class="card">
+        <h2>导入设备族清单</h2>
+        <textarea id="manifestInput" rows="10" placeholder='{"familyId": ..., "components": ["bootloader", ...]}'></textarea>
+        <button onclick="importManifest()">导入清单</button>
+        <pre id="manifestResult" class="result"></pre>
+      </div>
+      <div class="card">
+        <h2>导入签名固件元数据</h2>
+        <textarea id="firmwareInput" rows="10" placeholder='{"familyId, component, version, sha256, signer, signature, ...}'></textarea>
+        <button onclick="importFirmware()">导入固件元数据</button>
+        <pre id="firmwareResult" class="result"></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h2>已装载数据</h2>
+      <pre id="overview"></pre>
+    </div>
+  </section>
+
+  <!-- 兼容矩阵 -->
+  <section id="tab-matrix" class="tab">
+    <div class="card">
+      <h2>兼容矩阵</h2>
+      <label>设备族 <select id="matrixFamily"></select></label>
+      <label>硬件修订 <select id="matrixHw"></select></label>
+      <button onclick="loadMatrix()">查看矩阵</button>
+      <div id="matrixBody"></div>
+    </div>
+  </section>
+
+  <!-- cohorts -->
+  <section id="tab-cohorts" class="tab">
+    <div class="card">
+      <h2>批次（cohort）</h2>
+      <button onclick="loadCohorts()">刷新</button>
+      <button class="warn" onclick="recompute()">重算未冻结批次（冻结批次原样保留）</button>
+      <div id="cohortList"></div>
+    </div>
+    <div class="card">
+      <h2>新建 / 修改批次</h2>
+      <div class="formrow">
+        <input id="cId" placeholder="cohortId（可空自动生成）">
+        <input id="cLabel" placeholder="标签">
+        <label>族 <select id="cFamily"></select></label>
+        <label>硬件 <select id="cHw"></select></label>
+      </div>
+      <textarea id="cCurrent" rows='3' placeholder='现状 {"bootloader":"1.0.0", ...}'></textarea>
+      <textarea id="cTarget" rows='3' placeholder='目标 {"bootloader":"1.2.0", ...}'></textarea>
+      <label class="chk"><input type="checkbox" id="cFrozen"> 创建即冻结</label>
+      <button onclick="upsertCohort()">保存批次</button>
+      <pre id="cohortSaveResult" class="result"></pre>
+    </div>
+  </section>
+
+  <!-- releases -->
+  <section id="tab-releases" class="tab">
+    <div class="card">
+      <h2>发布方案</h2>
+      <div id="releaseList"></div>
+    </div>
+    <div class="card">
+      <h2>创建方案 / 推进设备</h2>
+      <input id="rName" placeholder="releaseId（可空）">
+      <input id="rDisplay" placeholder="显示名">
+      <input id="rCohorts" placeholder="cohortId，逗号分隔">
+      <button onclick="createRelease()">创建方案（draft）</button>
+      <div class="divider"></div>
+      <input id="advRequest" placeholder="requestId（幂等键）">
+      <input id="advRelease" placeholder="releaseId">
+      <input id="advCohort" placeholder="cohortId">
+      <input id="advDevice" placeholder="deviceId">
+      <button onclick="advanceDevice()">提交推进回执</button>
+      <pre id="advanceResult" class="result"></pre>
+    </div>
+  </section>
+
+  <!-- 临时分析 -->
+  <section id="tab-analyze" class="tab">
+    <div class="card">
+      <h2>任意现状 → 目标分析（不落库）</h2>
+      <label>族 <select id="aFamily"></select></label>
+      <label>硬件 <select id="aHw"></select></label>
+      <textarea id="aCurrent" rows='3' placeholder='现状 JSON'></textarea>
+      <textarea id="aTarget" rows='3' placeholder='目标 JSON'></textarea>
+      <button onclick="adHocAnalyze()">计算可行步骤 / 冲突集</button>
+      <div id="analyzeBody"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  错误码：<code>INPUT_FORMAT(400)</code> · <code>STATE_CONFLICT(409)</code> · <code>INTERNAL(500)</code>
+  ｜ 数据三类分离：<code>data/raw</code>、<code>data/derived</code>、<code>data/events</code>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

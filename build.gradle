@@ -1,0 +1,59 @@
+plugins {
+    id 'application'
+}
+
+group = 'fwplan'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-Xlint:all'
+}
+
+// 自研轻量测试任务：不依赖 JUnit，保证完全离线可运行
+sourceSets {
+    test {
+        java { srcDirs = ['src/test/java'] }
+    }
+}
+
+tasks.named('test') {
+    enabled = false
+}
+
+tasks.register('unitTest', JavaExec) {
+    group = 'verification'
+    description = 'Runs the built-in assertion-based unit tests.'
+    dependsOn 'compileTestJava', 'classes'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'fwplan.AllTests'
+}
+
+// 让标准生命周期 `gradle test` 执行自研断言测试
+tasks.matching { it.name == 'test' }.configureEach {
+    enabled = false
+    finalizedBy 'unitTest'
+}
+
+application {
+    mainClass = 'fwplan.Main'
+}
+
+run {
+    standardInput = System.in
+}
+
+tasks.register('signtool', JavaExec) {
+    group = 'application'
+    description = 'Generates keys or signs firmware metadata (see fwplan.SignTool).'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fwplan.SignTool'
+    if (project.hasProperty('cliArgs')) {
+        args(((String) project.property('cliArgs')).split(' ').toList())
+    }
+}
