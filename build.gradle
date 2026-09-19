@@ -1,0 +1,50 @@
+plugins {
+    id 'application'
+}
+
+group = 'fw'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+    options.encoding = 'UTF-8'
+}
+
+application {
+    mainClass = 'fw.Main'
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'fw.Main'
+    }
+}
+
+tasks.register('signTool', JavaExec) {
+    group = 'application'
+    description = 'Sign a firmware metadata JSON file with the demo HMAC key'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'fw.crypto.SignTool'
+}

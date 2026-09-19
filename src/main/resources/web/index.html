@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>固件升级编排台 · Pair-wise GSB</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">⬢</span>
+    <div>
+      <h1>固件升级编排台</h1>
+      <p>依赖区间求解 · 签名哈希识别 · 断点恢复 · cohort 分阶段发布</p>
+    </div>
+  </div>
+  <div class="server" id="server-status">服务连接中…</div>
+</header>
+
+<nav class="tabs">
+  <button data-tab="matrix" class="active">兼容矩阵</button>
+  <button data-tab="plan">步骤图 / 求解</button>
+  <button data-tab="rollout">发布批次</button>
+  <button data-tab="import">导入元数据</button>
+  <button data-tab="events">操作事件</button>
+</nav>
+
+<main>
+  <!-- ============================ MATRIX ============================ -->
+  <section id="tab-matrix" class="tab active">
+    <div class="toolbar">
+      <label>设备族
+        <select id="matrix-family"></select>
+      </label>
+      <span class="hint">绿色=该硬件修订可用；红色=无兼容条目。版本窗口是配套组件范围。</span>
+      <button id="matrix-refresh" class="ghost">刷新</button>
+    </div>
+    <div id="matrix-container"></div>
+  </section>
+
+  <!-- ============================= PLAN ============================= -->
+  <section id="tab-plan" class="tab">
+    <div class="toolbar wrap">
+      <label>设备族 <select id="plan-family"></select></label>
+      <label>硬件修订 <select id="plan-revision"></select></label>
+      <label class="grow">设备（带入现状）<select id="plan-device"><option value="">— 自定义 —</option></select></label>
+      <button id="plan-evaluate">计算可行步骤</button>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h2>现状组合</h2>
+        <div id="plan-current"></div>
+      </div>
+      <div class="card">
+        <h2>目标组件版本</h2>
+        <div id="plan-targets"></div>
+      </div>
+    </div>
+    <div id="plan-result"></div>
+  </section>
+
+  <!-- =========================== ROLLOUT ============================ -->
+  <section id="tab-rollout" class="tab">
+    <div class="toolbar wrap">
+      <label>批次
+        <select id="rollout-select"></select>
+      </label>
+      <button id="rollout-reload" class="ghost">重新加载</button>
+      <span class="spacer"></span>
+      <button id="rollout-approve" class="primary">批准并绑定快照</button>
+      <button id="rollout-recompute">重算未冻结批次</button>
+      <button id="rollout-export">导出决策包</button>
+    </div>
+    <div id="rollout-detail"></div>
+
+    <div class="card new-rollout">
+      <h2>新建发布方案</h2>
+      <div class="toolbar wrap">
+        <label class="grow">名称 <input id="new-name" value="canary 升级"></label>
+        <label>cohort（逗号分隔）<input id="new-cohorts" value="canary"></label>
+        <label>目标 main <select id="new-main"></select></label>
+        <label>radio <select id="new-radio"></select></label>
+        <label>sensor <select id="new-sensor"></select></label>
+        <button id="new-create">创建</button>
+      </div>
+      <p class="hint">已冻结设备/批次不会被纳入；批准后新上传元数据不改变该方案。</p>
+    </div>
+  </section>
+
+  <!-- ============================ IMPORT =========================== -->
+  <section id="tab-import" class="tab">
+    <div class="grid-2">
+      <div class="card">
+        <h2>导入设备族清单</h2>
+        <p class="hint">清单含硬件修订、bootloader 下限、组件与默认探针/健康判据。</p>
+        <textarea id="family-json" rows="16" spellcheck="false"></textarea>
+        <button id="family-import">导入清单</button>
+        <div id="family-import-result" class="import-result"></div>
+      </div>
+      <div class="card">
+        <h2>导入签名固件元数据</h2>
+        <p class="hint">二进制仅按 signer + sha256 识别；同名同版本不同哈希会被拒绝。</p>
+        <textarea id="package-json" rows="16" spellcheck="false"></textarea>
+        <button id="package-import">导入并校验签名</button>
+        <div id="package-import-result" class="import-result"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ EVENTS =========================== -->
+  <section id="tab-events" class="tab">
+    <div class="toolbar">
+      <button id="events-refresh" class="ghost">刷新事件</button>
+      <span class="hint">原始输入、派生结果、操作事件分目录落盘；这是事件流。</span>
+    </div>
+    <div class="card">
+      <table class="events-table">
+        <thead><tr><th>时间</th><th>类型</th><th>详情</th></tr></thead>
+        <tbody id="events-body"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast hidden"></div>
+<script src="/app.js"></script>
+</body>
+</html>
